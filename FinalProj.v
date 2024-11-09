@@ -117,7 +117,8 @@ wire				write_audio_out;
 // Internal Registers
 
 reg [18:0] delay_cnt;
-wire [18:0] delay;
+reg [18:0] delay;
+reg [31:0] volume;
 
 reg snd;
 
@@ -135,31 +136,56 @@ reg snd;
  //KEYBOARD
  // I added
 parameter A = 8'h1C;
+parameter B = 8'h32;
+parameter C = 8'h21;
+parameter D = 8'h23;
+parameter E = 8'h24;
+parameter F = 8'h2B;
+parameter G = 8'h34;
 
-always @(posedge CLOCK_50)
-begin
-	if (KEY[0] == 1'b0)	begin
-		last_data_received <= 8'h00;
-		
-	end
-	else if (ps2_key_pressed == 1'b1) begin
-		last_data_received <= ps2_key_data;
-		
-		
-		// letteer logic
-		ledToggle <= last_data_received == A;
-//		if(last_data_received == A)
-//		ledToggle <= ledToggle^1;
-	end
+always @(posedge CLOCK_50) begin
+    // SPEAKER: Handle delay logic
+    if (delay_cnt == delay) begin
+        delay_cnt <= 0;
+        snd <= !snd;  // Toggle sound
+    end else begin
+        delay_cnt <= delay_cnt + 1;
+    end
+
+    // KEYBOARD: Handle key presses
+    if (KEY[0] == 1'b0) begin
+        last_data_received <= 8'h00;  // Reset on KEY[0] press
+    end else if (ps2_key_pressed == 1'b1) begin
+        last_data_received <= ps2_key_data;  // Store the key data
+
+        // Toggle LED for specific keys (A, B, C, D, E, F, G)
+        case(last_data_received)
+            A, B, C, D, E, F, G: ledToggle <= 1'b1;  // Set LED toggle if keys A-G are pressed
+            default: ledToggle <= 1'b0;  // Reset LED for other keys
+        endcase
+    end
+
+    // Handle delay and volume value based on ledToggle
+    if (ledToggle) begin
+        volume <= snd ? 32'd10000000 : -32'd10000000;  // Set volume based on sound toggle
+        case(last_data_received)
+            A: delay <= 19'd113636;
+            B: delay <= 19'd101214;
+            C: delay <= 19'd95555;
+				D: delay <= 19'd85132;
+				E: delay <= 19'd75842;
+				F: delay <= 19'd71586;
+				G: delay <= 19'd63776;				
+            default: delay <= 19'd1000;  // Default delay if no specific key
+        endcase
+    end else begin
+        delay <= 19'd10000;  // Default delay if ledToggle is not active
+        volume <= 32'd0;      // Reset volume if ledToggle is not active
+    end
 end
 
-//SPEAKER
 
-always @(posedge CLOCK_50)
-	if(delay_cnt == delay) begin
-		delay_cnt <= 0;
-		snd <= !snd;
-	end else delay_cnt <= delay_cnt + 1;
+
 
 /*****************************************************************************
  *                            Combinational Logic                            *
@@ -180,9 +206,9 @@ assign HEX7 = 7'h7F;
  //SPEAKER
  
  
-assign delay = {SW[3:0], 15'd3000};
+//assign delay = {SW[3:0], 15'd3000};
 
-wire [31:0] volume = (SW == 0) ? 0 : snd ? 32'd10000000 : -32'd10000000;
+//wire [31:0] volume = (SW == 0) ? 0 : snd ? 32'd10000000 : -32'd10000000;
 
 
 assign read_audio_in			= audio_in_available & audio_out_allowed;
