@@ -1,5 +1,5 @@
 
-module FinalProj (
+module keyboard (
 	// Inputs
 	CLOCK_50,
 	KEY,
@@ -71,9 +71,8 @@ reg ledToggle; // I added
  *                             Sequential Logic                              *
  *****************************************************************************/
 // I added
-
 parameter A = 8'h1C;
-;
+
 always @(posedge CLOCK_50)
 begin
 	if (KEY[0] == 1'b0)	begin
