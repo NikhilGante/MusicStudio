@@ -1,0 +1,36 @@
+// writing out thoughts while i work
+// grace
+
+
+nov 10 2024
+so bit shifting left, multiplys the decimal value by 2^n , where n = number of times bit shifted
+bit shifting right, divides decimal value by 2^n.
+when bit shifting, rounds down
+
+for frequncies:
+notes follow this formula:
+ f = 2n/12*440
+ https://www.reddit.com/r/musictheory/comments/j3q0i3/how_can_you_calculate_the_frequency_of_a_given/#:~:text=The%20formula%20is%20f%20%3D%202,semitone%20is%2021%2F12.
+ "The formula is f = 2n/12*440, where n is the number of semitones above or below A4. This is because the frequency ratio of an equal-tempered semitone is 2^(1/12)."
+
+converting frequencies to delay
+1/freq = period
+period / (1/50 mill) = delay
+
+so what needs to happen?
+there should be a variable that represents n,
+when you press up or down arrow, it should increment or decrement this variable n
+using the formula f = asdasd it should find the frequency to output
+convert the frequency into delay
+make this the delay
+
+
+it would be really cool if we could do sharps and flats
+
+https://producelikeapro.com/blog/note-frequency-chart/
+
+delay = 50,000,000 / (baseFreq << n);
+OR
+delay = 50,000,000 / (baseFreq >> n);
+
+ok it works!
