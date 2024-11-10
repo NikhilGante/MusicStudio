@@ -6,16 +6,3 @@ This week (Week 10):
 -adding notes sounds
 -allow for different octaves (either by using arrow keys to go up/down and octave or shift/caps)
 
-thought process
-
-octave shifting
--doubles or halves frequency
--in binary, if you do a bit shift you are basically multiplying by 2
--if press up arrow, or down arrow, in the same way its detecting the other letters, it should set a variable, incrememnts or decrements this variable. in fsm part, if this variable is  <0 , >0 left shift right shift
--
-
-tapering off of notes volume
--have it be an option toggle? like caps lock
--array, convert exponential function into discrete points, stored in register (just an array), iterate through the register at a certain amt of clock cycles depending on how fast you want it to decay
-
-modelsim

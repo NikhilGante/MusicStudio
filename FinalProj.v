@@ -142,7 +142,10 @@ parameter D = 8'h23;
 parameter E = 8'h24;
 parameter F = 8'h2B;
 parameter G = 8'h34;
+parameter upArrow = 8'hE075;
+parameter downArrow = 8'hE072;
 
+/* stuff before nov 10 (works)
 always @(posedge CLOCK_50) begin
     // SPEAKER: Handle delay logic
     if (delay_cnt == delay) begin
@@ -184,8 +187,126 @@ always @(posedge CLOCK_50) begin
     end
 end
 
+*/
+//base freq is the 4th octave - 5th octave, A - G
+parameter baseFreqA = 19'd440;
+parameter baseFreqB = 19'd494;
+parameter baseFreqC = 19'd523;
+parameter baseFreqD = 19'd587;
+parameter baseFreqE = 19'd659;
+parameter baseFreqF = 19'd698;
+parameter baseFreqG = 19'd784;
 
+// n should range from -4 <= n <= 4
+// maybe -5 <= n <= 5 idk
+reg signed [3:0] n;  // 4-bit signed register for n
+reg [31:0] scaledFreq;  // Scaling factor
 
+initial begin
+    n = 0;
+end
+
+//this is what im editing from during nov 10 (IT WORKS)
+always @(posedge CLOCK_50) begin
+    // SPEAKER: Handle delay logic
+    if (delay_cnt == delay) begin
+        delay_cnt <= 0;
+        snd <= !snd;  // Toggle sound
+    end else begin
+        delay_cnt <= delay_cnt + 1;
+    end
+
+    // KEYBOARD: Handle key presses
+    if (KEY[0] == 1'b0) begin
+        last_data_received <= 8'h00;  // Reset on KEY[0] press
+    end else if (ps2_key_pressed == 1'b1) begin
+        last_data_received <= ps2_key_data;  // Store the key data
+
+        // Toggle LED for specific keys (A, B, C, D, E, F, G)
+        case(last_data_received)
+            A, B, C, D, E, F, G: ledToggle <= 1'b1;  // Set LED toggle if keys A-G are pressed
+				upArrow: n <= n + 1;
+				downArrow: n <= n - 1;
+            default: ledToggle <= 1'b0;  // Reset LED for other keys
+        endcase
+    end
+
+    // Handle delay and volume value based on ledToggle
+    if (ledToggle) begin
+        volume <= snd ? 32'd10000000 : -32'd10000000;  // Set volume based on sound toggle
+        
+				/*
+				so, if n > 0, delay = 50,000,000 / (baseFreq << n);
+				if n < 0, delay = 50000000 / (baseFreq >> n);
+				else (n=0), delay = 50000000 / baseFreq;
+				
+				*/
+				 if (n > 0) begin
+					  scaledFreq = 50000000 / (1 << n);  // Equivalent to dividing by 2^n
+				 end else if (n < 0) begin
+					  scaledFreq = 50000000 * (1 << -n); // Equivalent to multiplying by 2^(-n)
+				 end else begin
+					  scaledFreq = 50000000;             // No scaling if n == 0
+				 end
+
+				 // Use a single case statement with the precomputed scaled frequency
+				 case (last_data_received)
+					  A: delay <= scaledFreq / baseFreqA; // octave 4 A
+					  B: delay <= scaledFreq / baseFreqB;
+					  C: delay <= scaledFreq / baseFreqC;
+					  D: delay <= scaledFreq / baseFreqD;
+					  E: delay <= scaledFreq / baseFreqE;
+					  F: delay <= scaledFreq / baseFreqF;
+					  G: delay <= scaledFreq / baseFreqG; // octave 5 G
+					  default: delay <= 19'd1000;         // Default delay if no specific key
+				 endcase
+    end else begin
+        delay <= 19'd10000;  // Default delay if ledToggle is not active
+        volume <= 32'd0;      // Reset volume if ledToggle is not active
+    end
+end
+/*
+always @(posedge CLOCK_50) begin
+    // SPEAKER: Handle delay logic
+    if (delay_cnt == delay) begin
+        delay_cnt <= 0;
+        snd <= !snd;  // Toggle sound
+    end else begin
+        delay_cnt <= delay_cnt + 1;
+    end
+
+    // KEYBOARD: Handle key presses
+    if (KEY[0] == 1'b0) begin
+        last_data_received <= 8'h00;  // Reset on KEY[0] press
+    end else if (ps2_key_pressed == 1'b1) begin
+        last_data_received <= ps2_key_data;  // Store the key data
+
+        // Toggle LED for specific keys (A, B, C, D, E, F, G)
+        case(last_data_received)
+            A, B, C, D, E, F, G: ledToggle <= 1'b1;  // Set LED toggle if keys A-G are pressed
+            default: ledToggle <= 1'b0;  // Reset LED for other keys
+        endcase
+    end
+
+    // Handle delay and volume value based on ledToggle
+    if (ledToggle) begin
+        volume <= snd ? 32'd10000000 : -32'd10000000;  // Set volume based on sound toggle
+        case(last_data_received)
+            A: delay <= 19'd113636;
+            B: delay <= 19'd101214;
+            C: delay <= 19'd95555;
+				D: delay <= 19'd85132;
+				E: delay <= 19'd75842;
+				F: delay <= 19'd71586;
+				G: delay <= 19'd63776;				
+            default: delay <= 19'd1000;  // Default delay if no specific key
+        endcase
+    end else begin
+        delay <= 19'd10000;  // Default delay if ledToggle is not active
+        volume <= 32'd0;      // Reset volume if ledToggle is not active
+    end
+end
+*/
 
 /*****************************************************************************
  *                            Combinational Logic                            *
