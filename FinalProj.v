@@ -99,8 +99,8 @@ wire				ps2_key_pressed;
 // Internal Registers
 reg			[7:0]	last_data_received;
 
-reg ledToggle; // I added
- 
+reg [6:0] toggle; // I added
+
  
  
 // Internal Wires
@@ -114,13 +114,6 @@ wire		[31:0]	left_channel_audio_out;
 wire		[31:0]	right_channel_audio_out;
 wire				write_audio_out;
 
-// Internal Registers
-
-reg [18:0] delay_cnt;
-reg [18:0] delay;
-reg [31:0] volume;
-
-reg snd;
 
 // State Machine Registers
 
@@ -135,59 +128,25 @@ reg snd;
  
  //KEYBOARD
  // I added
-parameter A = 8'h1C;
-parameter B = 8'h32;
-parameter C = 8'h21;
-parameter D = 8'h23;
-parameter E = 8'h24;
-parameter F = 8'h2B;
-parameter G = 8'h34;
+parameter A = 8'h16;
+parameter B = 8'h1E;
+parameter C = 8'h26;
+parameter D = 8'h25;
+parameter E = 8'h2E;
+parameter F = 8'h36;
+parameter G = 8'h3D;
+parameter Ao = 8'hF016;
+parameter Bo = 8'hF01E;
+parameter Co = 8'hF026;
+parameter Do = 8'hF025;
+parameter Eo = 8'hF02E;
+parameter Fo = 8'hF036;
+parameter Go = 8'hF03D;
 parameter upArrow = 8'hE075;
 parameter downArrow = 8'hE072;
+parameter leftArrow = 8'hE06B;
+parameter rightArrow = 8'hE074;
 
-/* stuff before nov 10 (works)
-always @(posedge CLOCK_50) begin
-    // SPEAKER: Handle delay logic
-    if (delay_cnt == delay) begin
-        delay_cnt <= 0;
-        snd <= !snd;  // Toggle sound
-    end else begin
-        delay_cnt <= delay_cnt + 1;
-    end
-
-    // KEYBOARD: Handle key presses
-    if (KEY[0] == 1'b0) begin
-        last_data_received <= 8'h00;  // Reset on KEY[0] press
-    end else if (ps2_key_pressed == 1'b1) begin
-        last_data_received <= ps2_key_data;  // Store the key data
-
-        // Toggle LED for specific keys (A, B, C, D, E, F, G)
-        case(last_data_received)
-            A, B, C, D, E, F, G: ledToggle <= 1'b1;  // Set LED toggle if keys A-G are pressed
-            default: ledToggle <= 1'b0;  // Reset LED for other keys
-        endcase
-    end
-
-    // Handle delay and volume value based on ledToggle
-    if (ledToggle) begin
-        volume <= snd ? 32'd10000000 : -32'd10000000;  // Set volume based on sound toggle
-        case(last_data_received)
-            A: delay <= 19'd113636;
-            B: delay <= 19'd101214;
-            C: delay <= 19'd95555;
-				D: delay <= 19'd85132;
-				E: delay <= 19'd75842;
-				F: delay <= 19'd71586;
-				G: delay <= 19'd63776;				
-            default: delay <= 19'd1000;  // Default delay if no specific key
-        endcase
-    end else begin
-        delay <= 19'd10000;  // Default delay if ledToggle is not active
-        volume <= 32'd0;      // Reset volume if ledToggle is not active
-    end
-end
-
-*/
 //base freq is the 4th octave - 5th octave, A - G
 parameter baseFreqA = 19'd440;
 parameter baseFreqB = 19'd494;
@@ -197,23 +156,94 @@ parameter baseFreqE = 19'd659;
 parameter baseFreqF = 19'd698;
 parameter baseFreqG = 19'd784;
 
+// Registers for each note's state, delay, and volume
+reg [18:0] delay_cnt_A, delay_cnt_B, delay_cnt_C, delay_cnt_D, delay_cnt_E, delay_cnt_F, delay_cnt_G;
+reg [18:0] delay_A, delay_B, delay_C, delay_D, delay_E, delay_F, delay_G;
+reg snd_A, snd_B, snd_C, snd_D, snd_E, snd_F, snd_G;
+reg [31:0] volume_A, volume_B, volume_C, volume_D, volume_E, volume_F, volume_G;
+
 // n should range from -4 <= n <= 4
 // maybe -5 <= n <= 5 idk
 reg signed [3:0] n;  // 4-bit signed register for n
 reg [31:0] scaledFreq;  // Scaling factor
+reg flat;
+reg sharp;
 
+reg lastWasBreak;
+reg def;
+
+// Initialize delays and other signals
 initial begin
-    n = 0;
+	lastWasBreak = 0;
+	def = 0;
+	n = 0;
+	flat = 0;
+	sharp = 0;
+	snd_A = 0; snd_B = 0; snd_C = 0; snd_D = 0; snd_E = 0; snd_F = 0; snd_G = 0;
+	delay_A = baseFreqA; delay_B = baseFreqB; delay_C = baseFreqC;
+	delay_D = baseFreqD; delay_E = baseFreqE; delay_F = baseFreqF; delay_G = baseFreqG;
 end
+
+//sharp is right, flat is left
 
 //this is what im editing from during nov 10 (IT WORKS)
 always @(posedge CLOCK_50) begin
     // SPEAKER: Handle delay logic
-    if (delay_cnt == delay) begin
-        delay_cnt <= 0;
-        snd <= !snd;  // Toggle sound
+    
+    // Note A
+    if (delay_cnt_A == delay_A) begin
+        delay_cnt_A <= 0;
+        snd_A <= !snd_A;
     end else begin
-        delay_cnt <= delay_cnt + 1;
+        delay_cnt_A <= delay_cnt_A + 1;
+    end
+
+    // Note B
+    if (delay_cnt_B == delay_B) begin
+        delay_cnt_B <= 0;
+        snd_B <= !snd_B;
+    end else begin
+        delay_cnt_B <= delay_cnt_B + 1;
+    end
+
+    // Note C
+    if (delay_cnt_C == delay_C) begin
+        delay_cnt_C <= 0;
+        snd_C <= !snd_C;
+    end else begin
+        delay_cnt_C <= delay_cnt_C + 1;
+    end
+
+    // Note D
+    if (delay_cnt_D == delay_D) begin
+        delay_cnt_D <= 0;
+        snd_D <= !snd_D;
+    end else begin
+        delay_cnt_D <= delay_cnt_D + 1;
+    end
+
+    // Note E
+    if (delay_cnt_E == delay_E) begin
+        delay_cnt_E <= 0;
+        snd_E <= !snd_E;
+    end else begin
+        delay_cnt_E <= delay_cnt_E + 1;
+    end
+
+    // Note F
+    if (delay_cnt_F == delay_F) begin
+        delay_cnt_F <= 0;
+        snd_F <= !snd_F;
+    end else begin
+        delay_cnt_F <= delay_cnt_F + 1;
+    end
+
+    // Note G
+    if (delay_cnt_G == delay_G) begin
+        delay_cnt_G <= 0;
+        snd_G <= !snd_G;
+    end else begin
+        delay_cnt_G <= delay_cnt_G + 1;
     end
 
     // KEYBOARD: Handle key presses
@@ -221,122 +251,134 @@ always @(posedge CLOCK_50) begin
         last_data_received <= 8'h00;  // Reset on KEY[0] press
     end else if (ps2_key_pressed == 1'b1) begin
         last_data_received <= ps2_key_data;  // Store the key data
-
-        // Toggle LED for specific keys (A, B, C, D, E, F, G)
-        case(last_data_received)
-            A, B, C, D, E, F, G: ledToggle <= 1'b1;  // Set LED toggle if keys A-G are pressed
-				upArrow: n <= n + 1;
-				downArrow: n <= n - 1;
-            default: ledToggle <= 1'b0;  // Reset LED for other keys
-        endcase
+			/*
+			if(lastWasBreak) begin
+				 case(last_data_received)
+						A: toggle[0] <= 1'b0;
+						B: toggle[1] <= 1'b0;
+						C: toggle[2] <= 1'b0;
+						D: toggle[3] <= 1'b0; 
+						E: toggle[4] <= 1'b0; 
+						F: toggle[5] <= 1'b0; 
+						G: toggle[6] <= 1'b0;		
+				endcase
+				lastWasBreak <= 1'b0;
+			end else begin*/
+			  // Toggle LED for specific keys (A, B, C, D, E, F, G)
+			  case(last_data_received)
+					A: toggle[0] <= 1'b1;
+					B: toggle[1] <= 1'b1;
+					C: toggle[2] <= 1'b1;
+					D: toggle[3] <= 1'b1; 
+					E: toggle[4] <= 1'b1; 
+					F: toggle[5] <= 1'b1; 
+					G: toggle[6] <= 1'b1;
+					Ao: toggle[0] <= 1'b0;
+					Bo: toggle[1] <= 1'b0;
+					Co: toggle[2] <= 1'b0;
+					Do: toggle[3] <= 1'b0; 
+					Eo: toggle[4] <= 1'b0; 
+					Fo: toggle[5] <= 1'b0; 
+					Go: toggle[6] <= 1'b0;
+					// Set LED toggle if keys A-G are pressed
+					upArrow: n <= n + 1;
+					downArrow: n <= n - 1;
+					leftArrow: flat <= 1'b1;
+					rightArrow: sharp <= 1'b1;
+					8'hF0: lastWasBreak <= 1'b1;
+					default: begin
+					toggle <= 7'b0000000;  // Reset LED for other keys
+					flat <= 1'b0;
+					sharp <= 1'b0;
+					end
+				endcase
+			//end
     end
-
-    // Handle delay and volume value based on ledToggle
-    if (ledToggle) begin
-        volume <= snd ? 32'd10000000 : -32'd10000000;  // Set volume based on sound toggle
-        
-				/*
-				so, if n > 0, delay = 50,000,000 / (baseFreq << n);
-				if n < 0, delay = 50000000 / (baseFreq >> n);
-				else (n=0), delay = 50000000 / baseFreq;
-				
-				*/
-				 if (n > 0) begin
-					  scaledFreq = 50000000 / (1 << n);  // Equivalent to dividing by 2^n
-				 end else if (n < 0) begin
-					  scaledFreq = 50000000 * (1 << -n); // Equivalent to multiplying by 2^(-n)
-				 end else begin
-					  scaledFreq = 50000000;             // No scaling if n == 0
-				 end
-
-				 // Use a single case statement with the precomputed scaled frequency
-				 case (last_data_received)
-					  A: delay <= scaledFreq / baseFreqA; // octave 4 A
-					  B: delay <= scaledFreq / baseFreqB;
-					  C: delay <= scaledFreq / baseFreqC;
-					  D: delay <= scaledFreq / baseFreqD;
-					  E: delay <= scaledFreq / baseFreqE;
-					  F: delay <= scaledFreq / baseFreqF;
-					  G: delay <= scaledFreq / baseFreqG; // octave 5 G
-					  default: delay <= 19'd1000;         // Default delay if no specific key
-				 endcase
-    end else begin
-        delay <= 19'd10000;  // Default delay if ledToggle is not active
-        volume <= 32'd0;      // Reset volume if ledToggle is not active
-    end
+	 
+	 volume_A <= toggle[0]? (snd_A ? 32'd10000000 : -32'd10000000) : 32'b0;
+	 volume_B <= toggle[1]? (snd_B ? 32'd10000000 : -32'd10000000) : 32'b0;
+	 volume_C <= toggle[2]? (snd_C ? 32'd10000000 : -32'd10000000) : 32'b0;
+	 volume_D <= toggle[3]? (snd_D ? 32'd10000000 : -32'd10000000) : 32'b0;
+	 volume_E <= toggle[4]? (snd_E ? 32'd10000000 : -32'd10000000) : 32'b0;
+	 volume_F <= toggle[5]? (snd_F ? 32'd10000000 : -32'd10000000) : 32'b0;
+	 volume_G <= toggle[6]? (snd_G ? 32'd10000000 : -32'd10000000) : 32'b0;
+	 
+	 def <= 1'b0;
+	 if(toggle != 7'b0) begin
+	 
+		 if (n > 0) begin
+			  scaledFreq <= 50000000 / (1 << n);  
+		 end else if (n < 0) begin
+			  scaledFreq <= 50000000 * (1 << -n); 
+		 end else begin
+			  scaledFreq <= 50000000;            
+		 end
+//		 
+//		 if (flat) scaledFreq <= scaledFreq / 1.0595;
+//		 if (sharp) scaledFreq <= scaledFreq * 1.0595;
+//		 
+//		 
+		 case (last_data_received)
+					  A: delay_A <= scaledFreq / baseFreqA;
+					  B: delay_B <= scaledFreq / baseFreqB;
+					  C: delay_C <= scaledFreq / baseFreqC;
+					  D: delay_D <= scaledFreq / baseFreqD;
+					  E: delay_E <= scaledFreq / baseFreqE;
+					  F: delay_F <= scaledFreq / baseFreqF;
+					  G: delay_G <= scaledFreq / baseFreqG;
+					  default: begin
+							def <= 1'b1;
+							//delay_A <= baseFreqA; delay_B <= baseFreqB; delay_C <= baseFreqC;
+							//delay_D <= baseFreqD; delay_E <= baseFreqE; delay_F <= baseFreqF; delay_G <= baseFreqG;
+							
+							
+					  end
+		 endcase
+	 
+	 end else begin
+		volume_A <= 32'd0;
+		volume_B <= 32'd0;
+		volume_C <= 32'd0;
+		volume_D <= 32'd0;
+		volume_E <= 32'd0;
+		volume_F <= 32'd0;
+		volume_G <= 32'd0;
+		
+	 
+	 end
+	 
 end
-/*
-always @(posedge CLOCK_50) begin
-    // SPEAKER: Handle delay logic
-    if (delay_cnt == delay) begin
-        delay_cnt <= 0;
-        snd <= !snd;  // Toggle sound
-    end else begin
-        delay_cnt <= delay_cnt + 1;
-    end
 
-    // KEYBOARD: Handle key presses
-    if (KEY[0] == 1'b0) begin
-        last_data_received <= 8'h00;  // Reset on KEY[0] press
-    end else if (ps2_key_pressed == 1'b1) begin
-        last_data_received <= ps2_key_data;  // Store the key data
-
-        // Toggle LED for specific keys (A, B, C, D, E, F, G)
-        case(last_data_received)
-            A, B, C, D, E, F, G: ledToggle <= 1'b1;  // Set LED toggle if keys A-G are pressed
-            default: ledToggle <= 1'b0;  // Reset LED for other keys
-        endcase
-    end
-
-    // Handle delay and volume value based on ledToggle
-    if (ledToggle) begin
-        volume <= snd ? 32'd10000000 : -32'd10000000;  // Set volume based on sound toggle
-        case(last_data_received)
-            A: delay <= 19'd113636;
-            B: delay <= 19'd101214;
-            C: delay <= 19'd95555;
-				D: delay <= 19'd85132;
-				E: delay <= 19'd75842;
-				F: delay <= 19'd71586;
-				G: delay <= 19'd63776;				
-            default: delay <= 19'd1000;  // Default delay if no specific key
-        endcase
-    end else begin
-        delay <= 19'd10000;  // Default delay if ledToggle is not active
-        volume <= 32'd0;      // Reset volume if ledToggle is not active
-    end
-end
-*/
 
 /*****************************************************************************
  *                            Combinational Logic                            *
  *****************************************************************************/
 
  //KEYBOARD
- assign LEDR[0] = ledToggle;
- 
+ assign LEDR[6:0] = toggle;
+ assign LEDR[9] =lastWasBreak;
+ assign LEDR[8] = def;
 assign HEX2 = 7'h7F;
 assign HEX3 = 7'h7F;
 assign HEX4 = 7'h7F;
-assign HEX5 = 7'h7F;
-assign HEX6 = 7'h7F;
-assign HEX7 = 7'h7F;
+//assign HEX5 = 7'h7F;
+//assign HEX6 = 7'h7F;
+//assign HEX7 = 7'h7F;
  
- 
- 
- //SPEAKER
- 
- 
-//assign delay = {SW[3:0], 15'd3000};
-
-//wire [31:0] volume = (SW == 0) ? 0 : snd ? 32'd10000000 : -32'd10000000;
-
-
+// Combine volumes for simultaneous playback
 assign read_audio_in			= audio_in_available & audio_out_allowed;
+assign left_channel_audio_out = left_channel_audio_in +
+                                (toggle[0] ? volume_A : 0) +
+                                (toggle[1] ? volume_B : 0) +
+                                (toggle[2] ? volume_C : 0) +
+                                (toggle[3] ? volume_D : 0) +
+                                (toggle[4] ? volume_E : 0) +
+                                (toggle[5] ? volume_F : 0) +
+                                (toggle[6] ? volume_G : 0);
 
-assign left_channel_audio_out	= left_channel_audio_in+volume;
-assign right_channel_audio_out	= right_channel_audio_in+volume;
+assign right_channel_audio_out = left_channel_audio_out;  // Mirror left channel
 assign write_audio_out			= audio_in_available & audio_out_allowed;
+
 
 /*****************************************************************************
  *                              Internal Modules                             *
@@ -374,6 +416,16 @@ Hexadecimal_To_Seven_Segment Segment1 (
 
 	// Outputs
 	.seven_seg_display	(HEX1)
+);
+
+Hexadecimal_To_Seven_Segment Segmentn (
+	// Inputs
+	.hex_number			(n),
+
+	// Bidirectional
+
+	// Outputs
+	.seven_seg_display	(HEX5)
 );
 
 //SPEAKERS
@@ -420,5 +472,4 @@ avconf #(.USE_MIC_INPUT(1)) avc (
 );
 
 endmodule
-
 
