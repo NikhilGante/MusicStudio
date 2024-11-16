@@ -249,37 +249,37 @@ always @(posedge CLOCK_50) begin
     // KEYBOARD: Handle key presses
     if (KEY[0] == 1'b0) begin
         last_data_received <= 8'h00;  // Reset on KEY[0] press
-    end else if (ps2_key_pressed == 1'b1) begin
+    end else if (ps2_key_pressed) begin
         last_data_received <= ps2_key_data;  // Store the key data
-			/*
+			
 			if(lastWasBreak) begin
 				 case(last_data_received)
-						A: toggle[0] <= 1'b0;
-						B: toggle[1] <= 1'b0;
-						C: toggle[2] <= 1'b0;
+						A: toggle[6] <= 1'b0;
+						B: toggle[5] <= 1'b0;
+						C: toggle[4] <= 1'b0;
 						D: toggle[3] <= 1'b0; 
-						E: toggle[4] <= 1'b0; 
-						F: toggle[5] <= 1'b0; 
-						G: toggle[6] <= 1'b0;		
+						E: toggle[2] <= 1'b0; 
+						F: toggle[1] <= 1'b0; 
+						G: toggle[0] <= 1'b0;		
 				endcase
 				lastWasBreak <= 1'b0;
-			end else begin*/
+			end else begin
 			  // Toggle LED for specific keys (A, B, C, D, E, F, G)
 			  case(last_data_received)
-					A: toggle[0] <= 1'b1;
-					B: toggle[1] <= 1'b1;
-					C: toggle[2] <= 1'b1;
+					A: toggle[6] <= 1'b1;
+					B: toggle[5] <= 1'b1;
+					C: toggle[4] <= 1'b1;
 					D: toggle[3] <= 1'b1; 
-					E: toggle[4] <= 1'b1; 
-					F: toggle[5] <= 1'b1; 
-					G: toggle[6] <= 1'b1;
-					Ao: toggle[0] <= 1'b0;
-					Bo: toggle[1] <= 1'b0;
-					Co: toggle[2] <= 1'b0;
-					Do: toggle[3] <= 1'b0; 
-					Eo: toggle[4] <= 1'b0; 
-					Fo: toggle[5] <= 1'b0; 
-					Go: toggle[6] <= 1'b0;
+					E: toggle[2] <= 1'b1; 
+					F: toggle[1] <= 1'b1; 
+					G: toggle[0] <= 1'b1;
+//					Ao: toggle[0] <= 1'b0;
+//					Bo: toggle[1] <= 1'b0;
+//					Co: toggle[2] <= 1'b0;
+//					Do: toggle[3] <= 1'b0; 
+//					Eo: toggle[4] <= 1'b0; 
+//					Fo: toggle[5] <= 1'b0; 
+//					Go: toggle[6] <= 1'b0;
 					// Set LED toggle if keys A-G are pressed
 					upArrow: n <= n + 1;
 					downArrow: n <= n - 1;
@@ -292,16 +292,16 @@ always @(posedge CLOCK_50) begin
 					sharp <= 1'b0;
 					end
 				endcase
-			//end
+			end
     end
 	 
-	 volume_A <= toggle[0]? (snd_A ? 32'd10000000 : -32'd10000000) : 32'b0;
-	 volume_B <= toggle[1]? (snd_B ? 32'd10000000 : -32'd10000000) : 32'b0;
-	 volume_C <= toggle[2]? (snd_C ? 32'd10000000 : -32'd10000000) : 32'b0;
+	 volume_A <= toggle[6]? (snd_A ? 32'd10000000 : -32'd10000000) : 32'b0;
+	 volume_B <= toggle[5]? (snd_B ? 32'd10000000 : -32'd10000000) : 32'b0;
+	 volume_C <= toggle[4]? (snd_C ? 32'd10000000 : -32'd10000000) : 32'b0;
 	 volume_D <= toggle[3]? (snd_D ? 32'd10000000 : -32'd10000000) : 32'b0;
-	 volume_E <= toggle[4]? (snd_E ? 32'd10000000 : -32'd10000000) : 32'b0;
-	 volume_F <= toggle[5]? (snd_F ? 32'd10000000 : -32'd10000000) : 32'b0;
-	 volume_G <= toggle[6]? (snd_G ? 32'd10000000 : -32'd10000000) : 32'b0;
+	 volume_E <= toggle[2]? (snd_E ? 32'd10000000 : -32'd10000000) : 32'b0;
+	 volume_F <= toggle[1]? (snd_F ? 32'd10000000 : -32'd10000000) : 32'b0;
+	 volume_G <= toggle[0]? (snd_G ? 32'd10000000 : -32'd10000000) : 32'b0;
 	 
 	 def <= 1'b0;
 	 if(toggle != 7'b0) begin
@@ -368,13 +368,13 @@ assign HEX4 = 7'h7F;
 // Combine volumes for simultaneous playback
 assign read_audio_in			= audio_in_available & audio_out_allowed;
 assign left_channel_audio_out = left_channel_audio_in +
-                                (toggle[0] ? volume_A : 0) +
-                                (toggle[1] ? volume_B : 0) +
-                                (toggle[2] ? volume_C : 0) +
+                                (toggle[6] ? volume_A : 0) +
+                                (toggle[5] ? volume_B : 0) +
+                                (toggle[4] ? volume_C : 0) +
                                 (toggle[3] ? volume_D : 0) +
-                                (toggle[4] ? volume_E : 0) +
-                                (toggle[5] ? volume_F : 0) +
-                                (toggle[6] ? volume_G : 0);
+                                (toggle[2] ? volume_E : 0) +
+                                (toggle[1] ? volume_F : 0) +
+                                (toggle[0] ? volume_G : 0);
 
 assign right_channel_audio_out = left_channel_audio_out;  // Mirror left channel
 assign write_audio_out			= audio_in_available & audio_out_allowed;
@@ -472,4 +472,3 @@ avconf #(.USE_MIC_INPUT(1)) avc (
 );
 
 endmodule
-
