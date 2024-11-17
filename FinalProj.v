@@ -156,16 +156,22 @@ parameter baseFreqE = 19'd659;
 parameter baseFreqF = 19'd698;
 parameter baseFreqG = 19'd784;
 
+parameter flatFactor = 20'd10595;
+parameter sharpFactor = 20'd9439;
+
+reg [31:0] flatSharpFreq;
+
 // Registers for each note's state, delay, and volume
 reg [18:0] delay_cnt_A, delay_cnt_B, delay_cnt_C, delay_cnt_D, delay_cnt_E, delay_cnt_F, delay_cnt_G;
-reg [18:0] delay_A, delay_B, delay_C, delay_D, delay_E, delay_F, delay_G;
+reg [22:0] delay_A, delay_B, delay_C, delay_D, delay_E, delay_F, delay_G;
 reg snd_A, snd_B, snd_C, snd_D, snd_E, snd_F, snd_G;
 reg [31:0] volume_A, volume_B, volume_C, volume_D, volume_E, volume_F, volume_G;
 
 // n should range from -4 <= n <= 4
 // maybe -5 <= n <= 5 idk
 reg signed [3:0] n;  // 4-bit signed register for n
-reg [31:0] scaledFreq;  // Scaling factor
+reg [32:0] scaledFreq;  // Scaling factor
+reg [31:0] tempValue;
 reg flat;
 reg sharp;
 
@@ -273,23 +279,16 @@ always @(posedge CLOCK_50) begin
 					E: toggle[2] <= 1'b1; 
 					F: toggle[1] <= 1'b1; 
 					G: toggle[0] <= 1'b1;
-//					Ao: toggle[0] <= 1'b0;
-//					Bo: toggle[1] <= 1'b0;
-//					Co: toggle[2] <= 1'b0;
-//					Do: toggle[3] <= 1'b0; 
-//					Eo: toggle[4] <= 1'b0; 
-//					Fo: toggle[5] <= 1'b0; 
-//					Go: toggle[6] <= 1'b0;
 					// Set LED toggle if keys A-G are pressed
 					upArrow: n <= n + 1;
 					downArrow: n <= n - 1;
-					leftArrow: flat <= 1'b1;
-					rightArrow: sharp <= 1'b1;
+					leftArrow: flat <= ~flat;
+					rightArrow: sharp <= ~sharp;
 					8'hF0: lastWasBreak <= 1'b1;
 					default: begin
 					toggle <= 7'b0000000;  // Reset LED for other keys
-					flat <= 1'b0;
-					sharp <= 1'b0;
+					//flat <= 1'b0;
+					//sharp <= 1'b0;
 					end
 				endcase
 			end
@@ -313,12 +312,38 @@ always @(posedge CLOCK_50) begin
 		 end else begin
 			  scaledFreq <= 50000000;            
 		 end
-//		 
-//		 if (flat) scaledFreq <= scaledFreq / 1.0595;
-//		 if (sharp) scaledFreq <= scaledFreq * 1.0595;
-//		 
-//		 
-		 case (last_data_received)
+		 
+		 // this part works
+		if (sharp) begin
+			//scaledFreq <= scaledFreq * 10000 / flatFactor;
+			case (last_data_received)
+					  A: delay_A <= ((scaledFreq / baseFreqA) / 10000) * sharpFactor; 
+					  B: delay_B <= ((scaledFreq / baseFreqB) / 10000) * sharpFactor; 
+					  C: delay_C <= ((scaledFreq / baseFreqC) / 10000) * sharpFactor; 
+					  D: delay_D <= ((scaledFreq / baseFreqD) / 10000) * sharpFactor; 
+					  E: delay_E <= ((scaledFreq / baseFreqE) / 10000) * sharpFactor; 
+					  F: delay_F <= ((scaledFreq / baseFreqF) / 10000) * sharpFactor; 
+					  G: delay_G <= ((scaledFreq / baseFreqG) / 10000) * sharpFactor; 
+					  default: begin
+							def <= 1'b1;
+
+					  end
+			endcase
+		 end else if (flat) begin // sharp is prioritized
+			case (last_data_received)
+					  A: delay_A <= ((scaledFreq / baseFreqA) / 10000) * flatFactor; 
+					  B: delay_B <= ((scaledFreq / baseFreqB) / 10000) * flatFactor; 
+					  C: delay_C <= ((scaledFreq / baseFreqC) / 10000) * flatFactor; 
+					  D: delay_D <= ((scaledFreq / baseFreqD) / 10000) * flatFactor; 
+					  E: delay_E <= ((scaledFreq / baseFreqE) / 10000) * flatFactor; 
+					  F: delay_F <= ((scaledFreq / baseFreqF) / 10000) * flatFactor; 
+					  G: delay_G <= ((scaledFreq / baseFreqG) / 10000) * flatFactor; 
+					  default: begin
+							def <= 1'b1;
+					  end
+			endcase
+		 end else begin //neither on
+			case (last_data_received)
 					  A: delay_A <= scaledFreq / baseFreqA;
 					  B: delay_B <= scaledFreq / baseFreqB;
 					  C: delay_C <= scaledFreq / baseFreqC;
@@ -328,26 +353,13 @@ always @(posedge CLOCK_50) begin
 					  G: delay_G <= scaledFreq / baseFreqG;
 					  default: begin
 							def <= 1'b1;
-							//delay_A <= baseFreqA; delay_B <= baseFreqB; delay_C <= baseFreqC;
-							//delay_D <= baseFreqD; delay_E <= baseFreqE; delay_F <= baseFreqF; delay_G <= baseFreqG;
-							
-							
 					  end
-		 endcase
+			endcase
+		end
+	end
+	end
 	 
-	 end else begin
-		volume_A <= 32'd0;
-		volume_B <= 32'd0;
-		volume_C <= 32'd0;
-		volume_D <= 32'd0;
-		volume_E <= 32'd0;
-		volume_F <= 32'd0;
-		volume_G <= 32'd0;
-		
-	 
-	 end
-	 
-end
+
 
 
 /*****************************************************************************
@@ -357,7 +369,9 @@ end
  //KEYBOARD
  assign LEDR[6:0] = toggle;
  assign LEDR[9] =lastWasBreak;
- assign LEDR[8] = def;
+ //assign LEDR[8] = def;
+ assign LEDR[8] = sharp;
+ assign LEDR[7] = flat;
 assign HEX2 = 7'h7F;
 assign HEX3 = 7'h7F;
 assign HEX4 = 7'h7F;
