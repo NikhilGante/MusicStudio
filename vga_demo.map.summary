@@ -1,0 +1,17 @@
+Analysis & Synthesis Status : Successful - Sat Nov 16 16:20:44 2024
+Quartus Prime Version : 18.0.0 Build 614 04/24/2018 SJ Standard Edition
+Revision Name : vga_demo
+Top-level Entity Name : vga_demo
+Family : Cyclone V
+Logic utilization (in ALMs) : N/A
+Total registers : 67
+Total pins : 70
+Total virtual pins : 0
+Total block memory bits : 403,392
+Total DSP Blocks : 0
+Total HSSI RX PCSs : 0
+Total HSSI PMA RX Deserializers : 0
+Total HSSI TX PCSs : 0
+Total HSSI PMA TX Serializers : 0
+Total PLLs : 1
+Total DLLs : 0

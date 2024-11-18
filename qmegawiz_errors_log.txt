@@ -1,19 +1,10 @@
 
 
-W:/AudioTest/Audio_Controller/Audio_Clock.v
+C:/Users/gantenik/241/FinalProj/VGA stuff/vga_adapter/vga_pll.v
 
-Nov 09 12PM:55:59>: Error in CNX file format.
-
-Error messages are listed in file
-W:/AudioTest/Audio_Controller/Audio_Clock.cnxerr.
-
-Can't create the custom megafunction variation file(s)
-
-W:/FinalProj/Audio_Controller/Audio_Clock.v
-
-Nov 09 02PM:38:26>: Error in CNX file format.
+Nov 17 02PM:05:27>: Error in CNX file format.
 
 Error messages are listed in file
-W:/FinalProj/Audio_Controller/Audio_Clock.cnxerr.
+C:/Users/gantenik/241/FinalProj/VGA stuff/vga_adapter/vga_pll.cnxerr.
 
 Can't create the custom megafunction variation file(s)
