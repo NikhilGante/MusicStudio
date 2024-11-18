@@ -1,5 +1,10 @@
 
 module FinalProj (
+// VGA
+	VGA_R, VGA_G, VGA_B,
+	VGA_HS, VGA_VS, VGA_BLANK_N, VGA_SYNC_N, VGA_CLK,
+
+//NON VGA
 
 // KEYBOARd
 // Bidirectionals
@@ -51,6 +56,18 @@ module FinalProj (
 //input				CLOCK_50;
 //input		[3:0]	KEY;
 
+// VGA
+output [7:0] VGA_R;
+output [7:0] VGA_G;
+output [7:0] VGA_B;
+output VGA_HS;
+output VGA_VS;
+output VGA_BLANK_N;
+output VGA_SYNC_N;
+output VGA_CLK;	
+
+// NON-VGA
+
 // Bidirectionals
 inout				PS2_CLK;
 inout				PS2_DAT;
@@ -71,7 +88,7 @@ output		[6:0]	HEX7;
 // Inputs
 input				CLOCK_50;
 input		[3:0]	KEY;
-input		[3:0]	SW;
+input		[9:0]	SW;
 
 input				AUD_ADCDAT;
 
@@ -178,8 +195,18 @@ reg sharp;
 reg lastWasBreak;
 reg def;
 
+
+reg [3:0] keyNum;
+
+vga_demo  demo(CLOCK_50, SW, KEY, HEX3, HEX2, HEX1, HEX0,
+				VGA_R, VGA_G, VGA_B,
+				VGA_HS, VGA_VS, VGA_BLANK_N, VGA_SYNC_N, VGA_CLK, toggle);
+
 // Initialize delays and other signals
 initial begin
+	//vga
+	keyNum = 0;
+
 	lastWasBreak = 0;
 	def = 0;
 	n = 0;
@@ -191,6 +218,22 @@ initial begin
 end
 
 //sharp is right, flat is left
+
+//for vga
+always @(*) begin
+ 
+    // Check which bit in toggle is set and assign keyNum accordingly
+    case (toggle)
+        7'b0000001: keyNum = 3'd1;  // If toggle[0] is set, keyNum = 1
+        7'b0000010: keyNum = 3'd2;  // If toggle[1] is set, keyNum = 2
+        7'b0000100: keyNum = 3'd3;  // If toggle[2] is set, keyNum = 3
+        7'b0001000: keyNum = 3'd4;  // If toggle[3] is set, keyNum = 4
+        7'b0010000: keyNum = 3'd5;  // If toggle[4] is set, keyNum = 5
+        7'b0100000: keyNum = 3'd6;  // If toggle[5] is set, keyNum = 6
+        7'b1000000: keyNum = 3'd7;  // If toggle[6] is set, keyNum = 7
+        default: keyNum = 3'd0;     // If no bits are set, keyNum remains 0
+    endcase
+end
 
 //this is what im editing from during nov 10 (IT WORKS)
 always @(posedge CLOCK_50) begin
@@ -294,6 +337,7 @@ always @(posedge CLOCK_50) begin
 			end
     end
 	 
+	 
 	 volume_A <= toggle[6]? (snd_A ? 32'd10000000 : -32'd10000000) : 32'b0;
 	 volume_B <= toggle[5]? (snd_B ? 32'd10000000 : -32'd10000000) : 32'b0;
 	 volume_C <= toggle[4]? (snd_C ? 32'd10000000 : -32'd10000000) : 32'b0;
@@ -357,7 +401,7 @@ always @(posedge CLOCK_50) begin
 			endcase
 		end
 	end
-	end
+end
 	 
 
 
@@ -372,9 +416,11 @@ always @(posedge CLOCK_50) begin
  //assign LEDR[8] = def;
  assign LEDR[8] = sharp;
  assign LEDR[7] = flat;
-assign HEX2 = 7'h7F;
-assign HEX3 = 7'h7F;
-assign HEX4 = 7'h7F;
+ 
+//HEX 2 and 3 are controlled in VGA
+//assign HEX2 = 7'h7F;
+//assign HEX3 = 7'h7F;
+//assign HEX4 = 7'h7F;
 //assign HEX5 = 7'h7F;
 //assign HEX6 = 7'h7F;
 //assign HEX7 = 7'h7F;
@@ -412,34 +458,43 @@ assign write_audio_out			= audio_in_available & audio_out_allowed;
 	.received_data_en	(ps2_key_pressed)
 );
 
-Hexadecimal_To_Seven_Segment Segment0 (
+//hex7seg Segment0 (
+//	// Inputs
+//	.hex			(last_data_received[3:0]),
+//
+//	// Bidirectional
+//
+//	// Outputs
+//	.display	(HEX0)
+//);
+//
+//hex7seg Segment1 (
+//	// Inputs
+//	.hex			(last_data_received[7:4]),
+//
+//	// Bidirectional
+//
+//	// Outputs
+//	.display	(HEX1)
+//);
+
+hex7seg Segment4 (
 	// Inputs
-	.hex_number			(last_data_received[3:0]),
+	.hex			({1'b0, keyNum}),
 
 	// Bidirectional
 
 	// Outputs
-	.seven_seg_display	(HEX0)
+	.display	(HEX4)
 );
-
-Hexadecimal_To_Seven_Segment Segment1 (
+hex7seg Segmentn (
 	// Inputs
-	.hex_number			(last_data_received[7:4]),
+	.hex			(n),
 
 	// Bidirectional
 
 	// Outputs
-	.seven_seg_display	(HEX1)
-);
-
-Hexadecimal_To_Seven_Segment Segmentn (
-	// Inputs
-	.hex_number			(n),
-
-	// Bidirectional
-
-	// Outputs
-	.seven_seg_display	(HEX5)
+	.display	(HEX5)
 );
 
 //SPEAKERS
