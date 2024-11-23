@@ -1,8 +1,8 @@
 
 module FinalProj (
 // VGA
-//	VGA_R, VGA_G, VGA_B,
-//	VGA_HS, VGA_VS, VGA_BLANK_N, VGA_SYNC_N, VGA_CLK,
+	VGA_R, VGA_G, VGA_B,
+	VGA_HS, VGA_VS, VGA_BLANK_N, VGA_SYNC_N, VGA_CLK,
 
 //NON VGA
 
@@ -57,14 +57,14 @@ module FinalProj (
 //input		[3:0]	KEY;
 
 // VGA
-//output [7:0] VGA_R;
-//output [7:0] VGA_G;
-//output [7:0] VGA_B;
-//output VGA_HS;
-//output VGA_VS;
-//output VGA_BLANK_N;
-//output VGA_SYNC_N;
-//output VGA_CLK;	
+output [7:0] VGA_R;
+output [7:0] VGA_G;
+output [7:0] VGA_B;
+output VGA_HS;
+output VGA_VS;
+output VGA_BLANK_N;
+output VGA_SYNC_N;
+output VGA_CLK;	
 
 // NON-VGA
 
@@ -114,7 +114,7 @@ wire		[7:0]	ps2_key_data;
 wire				ps2_key_pressed;
 
 // Internal Registers
-reg			[7:0]	last_data_received;
+//reg			[7:0]	last_data_received;
 
 reg [6:0] toggle; // I added
 
@@ -197,16 +197,20 @@ reg def;
 
 
 reg [3:0] keyNum;
-/*
+
+reg toggleSet;
+
 vga_demo  demo(CLOCK_50, SW, KEY, HEX3, HEX2, HEX1, HEX0,
 				VGA_R, VGA_G, VGA_B,
-				VGA_HS, VGA_VS, VGA_BLANK_N, VGA_SYNC_N, VGA_CLK, toggle);
-*/
+				VGA_HS, VGA_VS, VGA_BLANK_N, VGA_SYNC_N, VGA_CLK, toggle, /*ps2_key_pressed*/toggleSet);
+
 // Initialize delays and other signals
 initial begin
 	//vga
-	//keyNum = 0;
-
+	keyNum = 0;
+	toggleSet = 0;
+	
+	
 	lastWasBreak = 0;
 	def = 0;
 	n = 0;
@@ -220,7 +224,6 @@ end
 //sharp is right, flat is left
 
 //for vga
-/*
 always @(*) begin
  
     // Check which bit in toggle is set and assign keyNum accordingly
@@ -235,77 +238,26 @@ always @(*) begin
         default: keyNum = 3'd0;     // If no bits are set, keyNum remains 0
     endcase
 end
-*/
 
 //this is what im editing from during nov 10 (IT WORKS)
 always @(posedge CLOCK_50) begin
     // SPEAKER: Handle delay logic
-    
-    // Note A
-    if (delay_cnt_A == delay_A) begin
-        delay_cnt_A <= 0;
-        snd_A <= !snd_A;
-    end else begin
-        delay_cnt_A <= delay_cnt_A + 1;
-    end
 
-    // Note B
-    if (delay_cnt_B == delay_B) begin
-        delay_cnt_B <= 0;
-        snd_B <= !snd_B;
-    end else begin
-        delay_cnt_B <= delay_cnt_B + 1;
-    end
-
-    // Note C
-    if (delay_cnt_C == delay_C) begin
-        delay_cnt_C <= 0;
-        snd_C <= !snd_C;
-    end else begin
-        delay_cnt_C <= delay_cnt_C + 1;
-    end
-
-    // Note D
-    if (delay_cnt_D == delay_D) begin
-        delay_cnt_D <= 0;
-        snd_D <= !snd_D;
-    end else begin
-        delay_cnt_D <= delay_cnt_D + 1;
-    end
-
-    // Note E
-    if (delay_cnt_E == delay_E) begin
-        delay_cnt_E <= 0;
-        snd_E <= !snd_E;
-    end else begin
-        delay_cnt_E <= delay_cnt_E + 1;
-    end
-
-    // Note F
-    if (delay_cnt_F == delay_F) begin
-        delay_cnt_F <= 0;
-        snd_F <= !snd_F;
-    end else begin
-        delay_cnt_F <= delay_cnt_F + 1;
-    end
-
-    // Note G
-    if (delay_cnt_G == delay_G) begin
-        delay_cnt_G <= 0;
-        snd_G <= !snd_G;
-    end else begin
-        delay_cnt_G <= delay_cnt_G + 1;
-    end
 
     // KEYBOARD: Handle key presses
-    if (KEY[0] == 1'b0) begin
-        last_data_received <= 8'h00;  // Reset on KEY[0] press
-    end else if (ps2_key_pressed) begin
-        //last_data_received <= ps2_key_data;  // Store the key data
+	 // 	 Got rid of reset here, doesn't really make sense
+	 
+//    if (KEY[0] == 1'b0) begin
+//        ps2_key_data <= 8'h00;  // Reset on KEY[0] press
+//    end else 
+	 
+	 
+	 
+	 if (ps2_key_pressed) begin
+//        last_data_received <= ps2_key_data;  // Store the key data
 			
 			if(lastWasBreak) begin
-				 //case(last_data_received)
-				case(ps2_key_data)
+				 case(ps2_key_data)
 						A: toggle[6] <= 1'b0;
 						B: toggle[5] <= 1'b0;
 						C: toggle[4] <= 1'b0;
@@ -317,9 +269,7 @@ always @(posedge CLOCK_50) begin
 				lastWasBreak <= 1'b0;
 			end else begin
 			  // Toggle LED for specific keys (A, B, C, D, E, F, G)
-			  //case(last_data_received)
-			  	case(ps2_key_data)
-
+			  case(ps2_key_data)
 					A: toggle[6] <= 1'b1;
 					B: toggle[5] <= 1'b1;
 					C: toggle[4] <= 1'b1;
@@ -340,8 +290,50 @@ always @(posedge CLOCK_50) begin
 					end
 				endcase
 			end
+			
     end
-	 
+	  
+    // Note A
+    if (delay_cnt_A == delay_A) begin
+        delay_cnt_A <= 0;
+        snd_A <= !snd_A;
+    end else delay_cnt_A <= delay_cnt_A + 1;
+
+    // Note B
+    if (delay_cnt_B == delay_B) begin
+        delay_cnt_B <= 0;
+        snd_B <= !snd_B;
+    end else delay_cnt_B <= delay_cnt_B + 1;
+
+    // Note C
+    if (delay_cnt_C == delay_C) begin
+        delay_cnt_C <= 0;
+        snd_C <= !snd_C;
+    end else delay_cnt_C <= delay_cnt_C + 1;
+
+    // Note D
+    if (delay_cnt_D == delay_D) begin
+        delay_cnt_D <= 0;
+        snd_D <= !snd_D;
+    end else delay_cnt_D <= delay_cnt_D + 1;
+
+    // Note E
+    if (delay_cnt_E == delay_E) begin
+        delay_cnt_E <= 0;
+        snd_E <= !snd_E;
+    end else delay_cnt_E <= delay_cnt_E + 1;
+
+    // Note F
+    if (delay_cnt_F == delay_F) begin
+        delay_cnt_F <= 0;
+        snd_F <= !snd_F;
+    end else delay_cnt_F <= delay_cnt_F + 1;
+
+    // Note G
+    if (delay_cnt_G == delay_G) begin
+        delay_cnt_G <= 0;
+        snd_G <= !snd_G;
+    end else delay_cnt_G <= delay_cnt_G + 1;
 	 
 	 volume_A <= toggle[6]? (snd_A ? 32'd10000000 : -32'd10000000) : 32'b0;
 	 volume_B <= toggle[5]? (snd_B ? 32'd10000000 : -32'd10000000) : 32'b0;
@@ -406,6 +398,10 @@ always @(posedge CLOCK_50) begin
 			endcase
 		end
 	end
+	
+//	toggleSet 
+	if (ps2_key_pressed) toggleSet <= 1'b1;
+   else toggleSet <= 1'b0;
 end
 	 
 
@@ -432,14 +428,14 @@ end
  
 // Combine volumes for simultaneous playback
 assign read_audio_in			= audio_in_available & audio_out_allowed;
-assign left_channel_audio_out = left_channel_audio_in +
-                                (toggle[6] ? volume_A : 0) +
-                                (toggle[5] ? volume_B : 0) +
-                                (toggle[4] ? volume_C : 0) +
-                                (toggle[3] ? volume_D : 0) +
-                                (toggle[2] ? volume_E : 0) +
-                                (toggle[1] ? volume_F : 0) +
-                                (toggle[0] ? volume_G : 0);
+assign left_channel_audio_out = left_channel_audio_in + volume_A + volume_B + volume_C + volume_D + volume_E + volume_F + volume_G;
+//                                (toggle[6] ? volume_A : 0) +
+//                                (toggle[5] ? volume_B : 0) +
+//                                (toggle[4] ? volume_C : 0) +
+//                                (toggle[3] ? volume_D : 0) +
+//                                (toggle[2] ? volume_E : 0) +
+//                                (toggle[1] ? volume_F : 0) +
+//                                (toggle[0] ? volume_G : 0);
 
 assign right_channel_audio_out = left_channel_audio_out;  // Mirror left channel
 assign write_audio_out			= audio_in_available & audio_out_allowed;
@@ -465,7 +461,7 @@ assign write_audio_out			= audio_in_available & audio_out_allowed;
 
 //hex7seg Segment0 (
 //	// Inputs
-//	.hex			(last_data_received[3:0]),
+//	.hex			(ps2_key_data[3:0]),
 //
 //	// Bidirectional
 //
@@ -475,7 +471,7 @@ assign write_audio_out			= audio_in_available & audio_out_allowed;
 //
 //hex7seg Segment1 (
 //	// Inputs
-//	.hex			(last_data_received[7:4]),
+//	.hex			(ps2_key_data[7:4]),
 //
 //	// Bidirectional
 //
@@ -483,7 +479,6 @@ assign write_audio_out			= audio_in_available & audio_out_allowed;
 //	.display	(HEX1)
 //);
 
-/*
 hex7seg Segment4 (
 	// Inputs
 	.hex			({1'b0, keyNum}),
@@ -501,7 +496,7 @@ hex7seg Segmentn (
 
 	// Outputs
 	.display	(HEX5)
-);*/
+);
 
 //SPEAKERS
  
@@ -547,3 +542,5 @@ avconf #(.USE_MIC_INPUT(1)) avc (
 );
 
 endmodule
+
+
