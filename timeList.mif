@@ -1,0 +1,24 @@
+-- MIF File for timeList
+WIDTH=29;            -- Each timestamp is 29 bits wide
+DEPTH=16;            -- 16 timestamps
+ADDRESS_RADIX=HEX;   -- Using hexadecimal addresses
+DATA_RADIX=DEC;      -- Data in decimal (500,000,000 represents 10 seconds)
+
+CONTENT BEGIN
+    0 : 000000000;      -- Time for Note A (0 cycles)
+    1 : 500000000;      -- Time for Note B (50 million cycles, 1 second)
+    2 : 1000000000;     -- Time for Note C (100 million cycles, 2 seconds)
+    3 : 1500000000;     -- Time for Note D (150 million cycles, 3 seconds)
+    4 : 2000000000;     -- Time for Note E (200 million cycles, 4 seconds)
+    5 : 2500000000;     -- Time for Note F (250 million cycles, 5 seconds)
+    6 : 3000000000;     -- Time for Note G (300 million cycles, 6 seconds)
+    7 : 3500000000;     -- Time for Note A (350 million cycles, 7 seconds)
+    8 : 4000000000;     -- Time for Note B (400 million cycles, 8 seconds)
+    9 : 4500000000;     -- Time for Note C (450 million cycles, 9 seconds)
+    A : 5000000000;     -- Time for Note D (500 million cycles, 10 seconds)
+    B : 5500000000;     -- Time for Note E (550 million cycles)
+    C : 6000000000;     -- Time for Note F (600 million cycles)
+    D : 6500000000;     -- Time for Note G (650 million cycles)
+    E : 7000000000;     -- Time for Note A (700 million cycles)
+    F : 7500000000;     -- Time for Note B (750 million cycles)
+END;

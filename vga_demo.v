@@ -10,8 +10,7 @@
 //module PianoKey (clk, KEY, SW, X, Y, plot, keyState, outX, outY, outClr, HEX0, HEX1, HEX2, HEX3);
 module PianoKey(CLOCK_50, KEY, X, Y, keyState, vga_x, vga_y, vga_color);
 				
-	input CLOCK_50;	
-//	input [9:0] SW;
+	input CLOCK_50;
 	input [3:0] KEY;
 	
 	parameter WIDTH_N = 5; // how many bits are required to hold width
@@ -63,19 +62,16 @@ module PianoKey(CLOCK_50, KEY, X, Y, keyState, vga_x, vga_y, vga_color);
         defparam U7.n = 8;
     regn U8 (Y + YC, KEY[0], 1'b1, CLOCK_50, vga_y);
         defparam U8.n = 7;
-
-//    assign plot = ~KEY[3];
-
 endmodule
 
-module vga_demo(CLOCK_50, SW, KEY, HEX3, HEX2, HEX1, HEX0,
+module vga_demo(CLOCK_50, SW, KEY,
 				VGA_R, VGA_G, VGA_B,
 				VGA_HS, VGA_VS, VGA_BLANK_N, VGA_SYNC_N, VGA_CLK, keyNum, newPress);
 	
 	input CLOCK_50;	
 	input [9:0] SW;
 	input [3:0] KEY;
-    output [6:0] HEX3, HEX2, HEX1, HEX0;
+//    output [6:0] HEX3, HEX2, HEX1, HEX0;
 	output [7:0] VGA_R;
 	output [7:0] VGA_G;
 	output [7:0] VGA_B;
@@ -121,9 +117,7 @@ module vga_demo(CLOCK_50, SW, KEY, HEX3, HEX2, HEX1, HEX0,
 	PianoKey myKey6(CLOCK_50, KEY, 8'd40, 7'd42, allKeyStates[5], VGA_X6, VGA_Y6, VGA_COLOR6);
 	PianoKey myKey7(CLOCK_50, KEY, 8'd24, 7'd42, allKeyStates[6], VGA_X7, VGA_Y7, VGA_COLOR7);
 	
-//	newPress
-	
-	// sequential cct	
+	// Sequential cct	
 	always @(posedge CLOCK_50) begin
 		if(newPress) begin
 			 case(allKeyStates ^ keyNum)	// parse out the key that's been changed and set curKey accordingly

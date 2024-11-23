@@ -193,14 +193,34 @@ reg flat;
 reg sharp;
 
 reg lastWasBreak;
-reg def;
 
-
-reg [3:0] keyNum;
+reg [3:0] keyNum; // A-G maps to 0-6
 
 reg toggleSet;
 
-vga_demo  demo(CLOCK_50, SW, KEY, HEX3, HEX2, HEX1, HEX0,
+reg [1:0] state;
+
+parameter sIdle = 2'd0;	// Normal playing
+parameter sRecording = 2'd1;
+parameter sReplaying = 2'd2;	// 
+
+
+// Allows us to play up to 16 notes
+// 2^29 > 10 seconds worth of clk cycles
+
+//reg [2:0] noteList [15:0]; /* synthesis ram_init_file = noteList.mif */
+//reg [28:0] timeList [15:0]; /* synthesis ram_init_file = timeList.mif */
+
+noteList nList (curNote, CLOCK_50, curNote);
+
+
+reg [28:0] tenSecCounter;
+reg [15:0] curNoteIndex;  // index
+
+wire [2:0] curNote; // 0-6 maps to A-G
+
+
+vga_demo  demo(CLOCK_50, SW, KEY,
 				VGA_R, VGA_G, VGA_B,
 				VGA_HS, VGA_VS, VGA_BLANK_N, VGA_SYNC_N, VGA_CLK, toggle, /*ps2_key_pressed*/toggleSet);
 
@@ -209,10 +229,10 @@ initial begin
 	//vga
 	keyNum = 0;
 	toggleSet = 0;
+	state = sIdle;
 	
 	
 	lastWasBreak = 0;
-	def = 0;
 	n = 0;
 	flat = 0;
 	sharp = 0;
@@ -236,21 +256,61 @@ always @(*) begin
         7'b0100000: keyNum = 3'd6;  // If toggle[5] is set, keyNum = 6
         7'b1000000: keyNum = 3'd7;  // If toggle[6] is set, keyNum = 7
         default: keyNum = 3'd0;     // If no bits are set, keyNum remains 0
-    endcase
+    endcase	 
 end
 
 //this is what im editing from during nov 10 (IT WORKS)
 always @(posedge CLOCK_50) begin
-    // SPEAKER: Handle delay logic
-
-
-    // KEYBOARD: Handle key presses
-	 // 	 Got rid of reset here, doesn't really make sense
 	 
-//    if (KEY[0] == 1'b0) begin
-//        ps2_key_data <= 8'h00;  // Reset on KEY[0] press
-//    end else 
-	 
+	 // FSM
+	 // Press: 1 for Idle, 2 for record, and 3 for replay
+	 case(state)
+		sIdle: begin
+			if(~KEY[2])	state <= sRecording;
+			else if(~KEY[3]) begin
+				state = sReplaying;
+				tenSecCounter = 0;
+				curNoteIndex = 0;
+			end
+			
+		end
+		sRecording: begin
+			if(~KEY[1])	state <= sIdle;
+			else if(~KEY[3])	state <= sReplaying;
+			
+//			if(curNote
+		
+		end
+		
+		sReplaying: begin
+			if(~KEY[1])	state <= sIdle;
+			else if(~KEY[2])	state <= sRecording;
+		
+		
+			if(tenSecCounter == 50_000_000) begin
+				curNoteIndex = curNoteIndex + 1; // reset counter after 1 sec
+				toggle[curNote] <= !toggle[curNote];
+			end
+			
+			
+			tenSecCounter = tenSecCounter + 1;
+		
+			// Handle end of song (wrap around or reset curNoteIndex when all notes are played)
+			if(curNoteIndex >= 15) curNoteIndex = 0; // Reset to the first note
+		
+//			// Play/release note
+//			if (tenSecCounter == timeList[curNoteIndex]) begin
+//				 toggle[noteList[curNoteIndex]] <= !toggle[noteList[curNoteIndex]];
+//				 curNoteIndex = curNoteIndex + 1; // Move to the next note
+//			end
+//		
+
+			
+			if(tenSecCounter == 250_000_000) tenSecCounter = 0; // reset counter after 10 secs
+		end
+
+//		default: state = state;
+	 endcase
 	 
 	 
 	 if (ps2_key_pressed) begin
@@ -283,15 +343,12 @@ always @(posedge CLOCK_50) begin
 					leftArrow: flat <= ~flat;
 					rightArrow: sharp <= ~sharp;
 					8'hF0: lastWasBreak <= 1'b1;
-					default: begin
-					toggle <= 7'b0000000;  // Reset LED for other keys
-					//flat <= 1'b0;
-					//sharp <= 1'b0;
-					end
+					default: toggle <= 7'b0000000;  // Reset LED for other keys
 				endcase
 			end
-			
     end
+	  
+	 // SPEAKER: Handle delay logic 
 	  
     // Note A
     if (delay_cnt_A == delay_A) begin
@@ -343,7 +400,6 @@ always @(posedge CLOCK_50) begin
 	 volume_F <= toggle[1]? (snd_F ? 32'd10000000 : -32'd10000000) : 32'b0;
 	 volume_G <= toggle[0]? (snd_G ? 32'd10000000 : -32'd10000000) : 32'b0;
 	 
-	 def <= 1'b0;
 	 if(toggle != 7'b0) begin
 	 
 		 if (n > 0) begin
@@ -365,10 +421,6 @@ always @(posedge CLOCK_50) begin
 					  E: delay_E <= ((scaledFreq / baseFreqE) / 10000) * sharpFactor; 
 					  F: delay_F <= ((scaledFreq / baseFreqF) / 10000) * sharpFactor; 
 					  G: delay_G <= ((scaledFreq / baseFreqG) / 10000) * sharpFactor; 
-					  default: begin
-							def <= 1'b1;
-
-					  end
 			endcase
 		 end else if (flat) begin // sharp is prioritized
 			case (ps2_key_data)
@@ -379,9 +431,6 @@ always @(posedge CLOCK_50) begin
 					  E: delay_E <= ((scaledFreq / baseFreqE) / 10000) * flatFactor; 
 					  F: delay_F <= ((scaledFreq / baseFreqF) / 10000) * flatFactor; 
 					  G: delay_G <= ((scaledFreq / baseFreqG) / 10000) * flatFactor; 
-					  default: begin
-							def <= 1'b1;
-					  end
 			endcase
 		 end else begin //neither on
 			case (ps2_key_data)
@@ -392,16 +441,11 @@ always @(posedge CLOCK_50) begin
 					  E: delay_E <= scaledFreq / baseFreqE;
 					  F: delay_F <= scaledFreq / baseFreqF;
 					  G: delay_G <= scaledFreq / baseFreqG;
-					  default: begin
-							def <= 1'b1;
-					  end
 			endcase
 		end
 	end
-	
-//	toggleSet 
-	if (ps2_key_pressed) toggleSet <= 1'b1;
-   else toggleSet <= 1'b0;
+	// If ps2_key_pressed goes high briefly, we want vga_demo to know that only after toggle has been set
+	toggleSet <= ps2_key_pressed; // We pass toggleSet to vga_demo to ensure this
 end
 	 
 
@@ -414,12 +458,11 @@ end
  //KEYBOARD
  assign LEDR[6:0] = toggle;
  assign LEDR[9] =lastWasBreak;
- //assign LEDR[8] = def;
  assign LEDR[8] = sharp;
  assign LEDR[7] = flat;
  
-//HEX 2 and 3 are controlled in VGA
-//assign HEX2 = 7'h7F;
+//HEX 2 and 3 are controlled in VGA ---- NOT ANYMORE!
+//assign HEX2 = state;
 //assign HEX3 = 7'h7F;
 //assign HEX4 = 7'h7F;
 //assign HEX5 = 7'h7F;
@@ -459,27 +502,49 @@ assign write_audio_out			= audio_in_available & audio_out_allowed;
 	.received_data_en	(ps2_key_pressed)
 );
 
-//hex7seg Segment0 (
-//	// Inputs
-//	.hex			(ps2_key_data[3:0]),
-//
-//	// Bidirectional
-//
-//	// Outputs
-//	.display	(HEX0)
-//);
-//
-//hex7seg Segment1 (
-//	// Inputs
-//	.hex			(ps2_key_data[7:4]),
-//
-//	// Bidirectional
-//
-//	// Outputs
-//	.display	(HEX1)
-//);
 
-hex7seg Segment4 (
+
+hex7seg SegmentKeyData0 (
+	// Inputs
+	.hex			(ps2_key_data[3:0]),
+
+	// Bidirectional
+
+	// Outputs
+	.display	(HEX0)
+);
+//
+hex7seg SegmentKeyData1 (
+	// Inputs
+	.hex			(ps2_key_data[7:4]),
+
+	// Bidirectional
+
+	// Outputs
+	.display	(HEX1)
+);
+
+hex7seg SegmentState (
+	// Inputs
+	.hex			({2'b00, state}),
+
+	// Bidirectional
+
+	// Outputs
+	.display	(HEX2)
+);
+
+hex7seg SegmentCurNote (
+	// Inputs
+	.hex			(curNoteIndex),
+
+	// Bidirectional
+
+	// Outputs
+	.display	(HEX3)
+);
+
+hex7seg SegmentKeyNum (
 	// Inputs
 	.hex			({1'b0, keyNum}),
 
@@ -488,7 +553,7 @@ hex7seg Segment4 (
 	// Outputs
 	.display	(HEX4)
 );
-hex7seg Segmentn (
+hex7seg SegmentOctave (
 	// Inputs
 	.hex			(n),
 

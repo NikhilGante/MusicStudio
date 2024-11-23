@@ -1,0 +1,24 @@
+-- MIF File for notesList
+WIDTH=3;             -- Each note is 3 bits wide
+DEPTH=16;            -- 16 notes
+ADDRESS_RADIX=HEX;   -- Using hexadecimal addresses
+DATA_RADIX=BIN;      -- Data in binary (3-bit for notes)
+
+CONTENT BEGIN
+    0 : 110;    -- Note A (0)
+    1 : 001;    -- Note B (1)
+    2 : 010;    -- Note C (2)
+    3 : 011;    -- Note D (3)
+    4 : 100;    -- Note E (4)
+    5 : 101;    -- Note F (5)
+    6 : 110;    -- Note G (6)
+    7 : 000;    -- Note A (0)
+    8 : 001;    -- Note B (1)
+    9 : 010;    -- Note C (2)
+    A : 011;    -- Note D (3)
+    B : 100;    -- Note E (4)
+    C : 101;    -- Note F (5)
+    D : 110;    -- Note G (6)
+    E : 000;    -- Note A (0)
+    F : 001;    -- Note B (1)
+END;
