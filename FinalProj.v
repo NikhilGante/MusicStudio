@@ -1,8 +1,8 @@
 
 module FinalProj (
 // VGA
-	VGA_R, VGA_G, VGA_B,
-	VGA_HS, VGA_VS, VGA_BLANK_N, VGA_SYNC_N, VGA_CLK,
+//	VGA_R, VGA_G, VGA_B,
+//	VGA_HS, VGA_VS, VGA_BLANK_N, VGA_SYNC_N, VGA_CLK,
 
 //NON VGA
 
@@ -57,14 +57,14 @@ module FinalProj (
 //input		[3:0]	KEY;
 
 // VGA
-output [7:0] VGA_R;
-output [7:0] VGA_G;
-output [7:0] VGA_B;
-output VGA_HS;
-output VGA_VS;
-output VGA_BLANK_N;
-output VGA_SYNC_N;
-output VGA_CLK;	
+//output [7:0] VGA_R;
+//output [7:0] VGA_G;
+//output [7:0] VGA_B;
+//output VGA_HS;
+//output VGA_VS;
+//output VGA_BLANK_N;
+//output VGA_SYNC_N;
+//output VGA_CLK;	
 
 // NON-VGA
 
@@ -197,15 +197,15 @@ reg def;
 
 
 reg [3:0] keyNum;
-
+/*
 vga_demo  demo(CLOCK_50, SW, KEY, HEX3, HEX2, HEX1, HEX0,
 				VGA_R, VGA_G, VGA_B,
 				VGA_HS, VGA_VS, VGA_BLANK_N, VGA_SYNC_N, VGA_CLK, toggle);
-
+*/
 // Initialize delays and other signals
 initial begin
 	//vga
-	keyNum = 0;
+	//keyNum = 0;
 
 	lastWasBreak = 0;
 	def = 0;
@@ -220,6 +220,7 @@ end
 //sharp is right, flat is left
 
 //for vga
+/*
 always @(*) begin
  
     // Check which bit in toggle is set and assign keyNum accordingly
@@ -234,6 +235,7 @@ always @(*) begin
         default: keyNum = 3'd0;     // If no bits are set, keyNum remains 0
     endcase
 end
+*/
 
 //this is what im editing from during nov 10 (IT WORKS)
 always @(posedge CLOCK_50) begin
@@ -299,10 +301,11 @@ always @(posedge CLOCK_50) begin
     if (KEY[0] == 1'b0) begin
         last_data_received <= 8'h00;  // Reset on KEY[0] press
     end else if (ps2_key_pressed) begin
-        last_data_received <= ps2_key_data;  // Store the key data
+        //last_data_received <= ps2_key_data;  // Store the key data
 			
 			if(lastWasBreak) begin
-				 case(last_data_received)
+				 //case(last_data_received)
+				case(ps2_key_data)
 						A: toggle[6] <= 1'b0;
 						B: toggle[5] <= 1'b0;
 						C: toggle[4] <= 1'b0;
@@ -314,7 +317,9 @@ always @(posedge CLOCK_50) begin
 				lastWasBreak <= 1'b0;
 			end else begin
 			  // Toggle LED for specific keys (A, B, C, D, E, F, G)
-			  case(last_data_received)
+			  //case(last_data_received)
+			  	case(ps2_key_data)
+
 					A: toggle[6] <= 1'b1;
 					B: toggle[5] <= 1'b1;
 					C: toggle[4] <= 1'b1;
@@ -360,7 +365,7 @@ always @(posedge CLOCK_50) begin
 		 // this part works
 		if (sharp) begin
 			//scaledFreq <= scaledFreq * 10000 / flatFactor;
-			case (last_data_received)
+			case (ps2_key_data)
 					  A: delay_A <= ((scaledFreq / baseFreqA) / 10000) * sharpFactor; 
 					  B: delay_B <= ((scaledFreq / baseFreqB) / 10000) * sharpFactor; 
 					  C: delay_C <= ((scaledFreq / baseFreqC) / 10000) * sharpFactor; 
@@ -374,7 +379,7 @@ always @(posedge CLOCK_50) begin
 					  end
 			endcase
 		 end else if (flat) begin // sharp is prioritized
-			case (last_data_received)
+			case (ps2_key_data)
 					  A: delay_A <= ((scaledFreq / baseFreqA) / 10000) * flatFactor; 
 					  B: delay_B <= ((scaledFreq / baseFreqB) / 10000) * flatFactor; 
 					  C: delay_C <= ((scaledFreq / baseFreqC) / 10000) * flatFactor; 
@@ -387,7 +392,7 @@ always @(posedge CLOCK_50) begin
 					  end
 			endcase
 		 end else begin //neither on
-			case (last_data_received)
+			case (ps2_key_data)
 					  A: delay_A <= scaledFreq / baseFreqA;
 					  B: delay_B <= scaledFreq / baseFreqB;
 					  C: delay_C <= scaledFreq / baseFreqC;
@@ -478,6 +483,7 @@ assign write_audio_out			= audio_in_available & audio_out_allowed;
 //	.display	(HEX1)
 //);
 
+/*
 hex7seg Segment4 (
 	// Inputs
 	.hex			({1'b0, keyNum}),
@@ -495,7 +501,7 @@ hex7seg Segmentn (
 
 	// Outputs
 	.display	(HEX5)
-);
+);*/
 
 //SPEAKERS
  

@@ -1,5 +1,5 @@
 Flow report for vga_demo
-Sat Nov 16 16:22:40 2024
+Fri Nov 22 18:22:57 2024
 Quartus Prime Version 18.0.0 Build 614 04/24/2018 SJ Standard Edition
 
 
@@ -37,29 +37,24 @@ refer to the applicable agreement for further details.
 
 
 
-+-----------------------------------------------------------------------------------+
-; Flow Summary                                                                      ;
-+---------------------------------+-------------------------------------------------+
-; Flow Status                     ; Successful - Sat Nov 16 16:22:07 2024           ;
-; Quartus Prime Version           ; 18.0.0 Build 614 04/24/2018 SJ Standard Edition ;
-; Revision Name                   ; vga_demo                                        ;
-; Top-level Entity Name           ; vga_demo                                        ;
-; Family                          ; Cyclone V                                       ;
-; Device                          ; 5CSEMA5F31C6                                    ;
-; Timing Models                   ; Final                                           ;
-; Logic utilization (in ALMs)     ; 84 / 32,070 ( < 1 % )                           ;
-; Total registers                 ; 70                                              ;
-; Total pins                      ; 70 / 457 ( 15 % )                               ;
-; Total virtual pins              ; 0                                               ;
-; Total block memory bits         ; 403,392 / 4,065,280 ( 10 % )                    ;
-; Total DSP Blocks                ; 0 / 87 ( 0 % )                                  ;
-; Total HSSI RX PCSs              ; 0                                               ;
-; Total HSSI PMA RX Deserializers ; 0                                               ;
-; Total HSSI TX PCSs              ; 0                                               ;
-; Total HSSI PMA TX Serializers   ; 0                                               ;
-; Total PLLs                      ; 1 / 6 ( 17 % )                                  ;
-; Total DLLs                      ; 0 / 4 ( 0 % )                                   ;
-+---------------------------------+-------------------------------------------------+
++-------------------------------------------------------------------------------+
+; Flow Summary                                                                  ;
++-----------------------------+-------------------------------------------------+
+; Flow Status                 ; Flow Failed - Fri Nov 22 18:22:57 2024          ;
+; Quartus Prime Version       ; 18.0.0 Build 614 04/24/2018 SJ Standard Edition ;
+; Revision Name               ; vga_demo                                        ;
+; Top-level Entity Name       ; vga_demo                                        ;
+; Family                      ; Cyclone V                                       ;
+; Device                      ; 5CSEMA5F31C6                                    ;
+; Timing Models               ; Final                                           ;
+; Logic utilization (in ALMs) ; N/A until Partition Merge                       ;
+; Total registers             ; N/A until Partition Merge                       ;
+; Total pins                  ; N/A until Partition Merge                       ;
+; Total virtual pins          ; N/A until Partition Merge                       ;
+; Total block memory bits     ; N/A until Partition Merge                       ;
+; Total PLLs                  ; N/A until Partition Merge                       ;
+; Total DLLs                  ; N/A until Partition Merge                       ;
++-----------------------------+-------------------------------------------------+
 
 
 +-----------------------------------------+
@@ -67,7 +62,7 @@ refer to the applicable agreement for further details.
 +-------------------+---------------------+
 ; Option            ; Setting             ;
 +-------------------+---------------------+
-; Start date & time ; 11/16/2024 16:19:33 ;
+; Start date & time ; 11/22/2024 18:22:53 ;
 ; Main task         ; Compilation         ;
 ; Revision Name     ; vga_demo            ;
 +-------------------+---------------------+
@@ -78,7 +73,7 @@ refer to the applicable agreement for further details.
 +-------------------------------------+----------------------------------------+---------------+-------------+------------+
 ; Assignment Name                     ; Value                                  ; Default Value ; Entity Name ; Section Id ;
 +-------------------------------------+----------------------------------------+---------------+-------------+------------+
-; COMPILER_SIGNATURE_ID               ; 93181000679155.173179197214952         ; --            ; --          ; --         ;
+; COMPILER_SIGNATURE_ID               ; 84486698148868.173231777312104         ; --            ; --          ; --         ;
 ; MAX_CORE_JUNCTION_TEMP              ; 85                                     ; --            ; --          ; --         ;
 ; MIN_CORE_JUNCTION_TEMP              ; 0                                      ; --            ; --          ; --         ;
 ; PARTITION_COLOR                     ; -- (Not supported for targeted family) ; --            ; --          ; Top        ;
@@ -94,11 +89,8 @@ refer to the applicable agreement for further details.
 +----------------------+--------------+-------------------------+---------------------+------------------------------------+
 ; Module Name          ; Elapsed Time ; Average Processors Used ; Peak Virtual Memory ; Total CPU Time (on all processors) ;
 +----------------------+--------------+-------------------------+---------------------+------------------------------------+
-; Analysis & Synthesis ; 00:01:08     ; 1.0                     ; 4883 MB             ; 00:00:21                           ;
-; Fitter               ; 00:00:53     ; 1.1                     ; 6991 MB             ; 00:01:26                           ;
-; Assembler            ; 00:00:11     ; 1.0                     ; 4863 MB             ; 00:00:06                           ;
-; Timing Analyzer      ; 00:00:30     ; 1.1                     ; 5225 MB             ; 00:00:09                           ;
-; Total                ; 00:02:42     ; --                      ; --                  ; 00:02:02                           ;
+; Analysis & Synthesis ; 00:00:04     ; 1.0                     ; 4792 MB             ; 00:00:10                           ;
+; Total                ; 00:00:04     ; --                      ; --                  ; 00:00:10                           ;
 +----------------------+--------------+-------------------------+---------------------+------------------------------------+
 
 
@@ -107,10 +99,7 @@ refer to the applicable agreement for further details.
 +----------------------+------------------+------------+------------+----------------+
 ; Module Name          ; Machine Hostname ; OS Name    ; OS Version ; Processor type ;
 +----------------------+------------------+------------+------------+----------------+
-; Analysis & Synthesis ; BA3135WS26       ; Windows 10 ; 10.0       ; x86_64         ;
-; Fitter               ; BA3135WS26       ; Windows 10 ; 10.0       ; x86_64         ;
-; Assembler            ; BA3135WS26       ; Windows 10 ; 10.0       ; x86_64         ;
-; Timing Analyzer      ; BA3135WS26       ; Windows 10 ; 10.0       ; x86_64         ;
+; Analysis & Synthesis ; BA3145WS04       ; Windows 10 ; 10.0       ; x86_64         ;
 +----------------------+------------------+------------+------------+----------------+
 
 
@@ -118,9 +107,6 @@ refer to the applicable agreement for further details.
 ; Flow Log ;
 ------------
 quartus_map --read_settings_files=on --write_settings_files=off vga_demo -c vga_demo
-quartus_fit --read_settings_files=off --write_settings_files=off vga_demo -c vga_demo
-quartus_asm --read_settings_files=off --write_settings_files=off vga_demo -c vga_demo
-quartus_sta vga_demo -c vga_demo
 
 
 
